@@ -1,0 +1,28 @@
+{
+	"files":[
+		{
+			"classes":["Exception"],
+			"file":"exceptions/Exception.php"
+		},
+		{
+			"classes":["BadPackageNameException"],
+			"file":"exceptions/BadPackageNameException.php"
+		},
+		{
+			"classes":["AlreadyPackageExistException"],
+			"file":"exceptions/AlreadyPackageExistException.php"
+		},
+		{
+			"classes":["Process"],
+			"file":"processes/Process.php"
+		},
+		{
+			"classes":["Packages"],
+			"file":"processes/Packages.php"
+		},
+		{
+			"classes":["Translator"],
+			"file":"processes/Translator.php"
+		}
+	]
+}
