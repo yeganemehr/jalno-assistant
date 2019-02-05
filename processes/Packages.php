@@ -1,18 +1,55 @@
 <?php
 namespace packages\assistant;
-use packages\base\{IO\directory\local as Directory, translator, json, notShellAccess, log};
+use packages\base\{IO\directory\local as Directory, IO\file\local as File, translator, json, notShellAccess, log};
 use packages\assistant\Translator as AssistantTranslator;
 
 class Packages extends Process {
 	/**
 	 * Check name of package based on grammer.
 	 * 
-	 * @param string
+	 * @param string $name
 	 * @return bool
 	 */
 	public static function isValidPackageName(string $name): bool {
 		return preg_match("/^[a-z_][a-z0-9_]*$/i", $name);
 	}
+	
+	/**
+	 * Check there is a package with this name in packages directory or not.
+	 * 
+	 * @param string $name
+	 * @return bool
+	 */
+	public static function isPackage(string $name): bool {
+		return (new Directory("packages/{$name}"))->exists();
+	}
+
+	/**
+	 * @return packages\base\IO\directory\local
+	 */
+	public static function getPackageDirectory(string $name) {
+		return new Directory("packages/" . $name);
+	}
+
+	/**
+	 * Load package.json of given package and return its content.
+	 * 
+	 * @param strin $name
+	 * @throws packages\assistant\PackageConfigException if package.json can't be found or can't be decod.
+	 * @return array
+	 */
+	public static function getPackageConfig(string $name): array {
+		$file = new File("packages/{$name}/package.json");
+		if (!$file->exists()) {
+			throw new PackageConfigException($name, $file->getPath(). " notfound");
+		}
+		$json = json\decode($file->read());
+		if (json_last_error()) {
+			throw new PackageConfigException($name, $file->getPath(). " json decode error: " . json_last_error_msg() . "(" . json_last_error() . ")");
+		}
+		return $json;
+	}
+
 	/**
 	 * @param array $data should be contain "name"(string)
 	 * 					  other optional indexes: 

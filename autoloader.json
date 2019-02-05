@@ -1,28 +1,88 @@
 {
-	"files":[
-		{
-			"classes":["Exception"],
-			"file":"exceptions/Exception.php"
-		},
-		{
-			"classes":["BadPackageNameException"],
-			"file":"exceptions/BadPackageNameException.php"
-		},
-		{
-			"classes":["AlreadyPackageExistException"],
-			"file":"exceptions/AlreadyPackageExistException.php"
-		},
-		{
-			"classes":["Process"],
-			"file":"processes/Process.php"
-		},
-		{
-			"classes":["Packages"],
-			"file":"processes/Packages.php"
-		},
-		{
-			"classes":["Translator"],
-			"file":"processes/Translator.php"
-		}
-	]
+    "files": [
+        {
+            "classes": [
+                "PhpParser\\AutoloadItemFinder"
+            ],
+            "file": "PhpParser/AutoloadItemFinder.php"
+        },
+        {
+            "classes": [
+                "Exception"
+            ],
+            "file": "exceptions/Exception.php"
+        },
+        {
+            "classes": [
+                "BadPackageNameException"
+            ],
+            "file": "exceptions/BadPackageNameException.php"
+        },
+        {
+            "classes": [
+                "AlreadyPackageExistException"
+            ],
+            "file": "exceptions/AlreadyPackageExistException.php"
+        },
+        {
+            "classes": [
+                "PackageNotExistException"
+            ],
+            "file": "exceptions/PackageNotExistException.php"
+        },
+        {
+            "classes": [
+                "AutoloaderException"
+            ],
+            "file": "exceptions/AutoloaderException.php"
+        },
+        {
+            "classes": [
+                "BadClassNameException"
+            ],
+            "file": "exceptions/BadClassNameException.php"
+        },
+        {
+            "classes": [
+                "GitExecutableException"
+            ],
+            "file": "exceptions/GitExecutableException.php"
+        },
+        {
+            "classes": [
+                "PackageConfigException"
+            ],
+            "file": "exceptions/PackageConfigException.php"
+        },
+        {
+            "classes": [
+                "Process"
+            ],
+            "file": "processes/Process.php"
+        },
+        {
+            "classes": [
+                "Packages"
+            ],
+            "file": "processes/Packages.php"
+        },
+        {
+            "classes": [
+                "Translator"
+            ],
+            "file": "processes/Translator.php"
+        },
+        {
+            "classes": [
+                "Autoloader"
+            ],
+            "file": "processes/Autoloader.php"
+        },
+        {
+            "classes": [
+                "Models"
+            ],
+            "file": "processes/Models.php"
+        }
+    ]
 }
