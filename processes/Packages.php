@@ -11,7 +11,7 @@ class Packages extends Process {
 	 * @return bool
 	 */
 	public static function isValidPackageName(string $name): bool {
-		return preg_match("/^[a-z_][a-z0-9_]*$/i", $name);
+		return Autoloader::isValidClassName($name, false);
 	}
 	
 	/**

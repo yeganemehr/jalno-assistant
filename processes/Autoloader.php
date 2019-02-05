@@ -56,9 +56,12 @@ class Autoloader extends Process {
 		$traverser->traverse($stmts);
 		return array_column($objectVisitor->getItems(), 'class');
 	}
+
 	/**
 	 * remove preffix packages and package name of provided class name.
 	 * 
+	 * @param string $package package name
+	 * @param string $class fully qualified name of class
 	 * @throws packages\assistant\BadClassNameException if there is no standard prefix in provided class name.
 	 * @return string
 	 */
@@ -68,6 +71,62 @@ class Autoloader extends Process {
 			throw new BadClassNameException($class);
 		}
 		return $parts[2];
+	}
+	
+	/**
+	 * find and parse autoloader the package and looking for the class.
+	 * 
+	 * @param string $package
+	 * @param string $class summerized name of class
+	 * @throws packages\assistant\PackageConfigException {@see Packages::getPackageConfig()}
+	 * @throws packages\assistant\AutoloaderException if the package does not have an autoloader.
+	 * @throws packages\base\IO\NotFoundException {@see Autoloader::parseAutoloaderFile()}
+	 * @throws packages\assistant\AutoloaderException {@see Autoloader::parseAutoloaderFile()}
+	 * 
+	 */
+	public static function classExistsInPackage(string $package, string $class) {
+		$autoloaderFile = self::getAutoloaderFileOfPackage($package);
+		if (!$autoloaderFile) {
+			throw new AutoloaderException("this package does not have an autoloader");
+		}
+		return self::classExists($autoloaderFile, $class);
+	}
+
+	/**
+	 * parse autoloader the package and looking for the class.
+	 * 
+	 * @throws packages\base\IO\NotFoundException {@see Autoloader::parseAutoloaderFile()}
+	 * @throws packages\assistant\AutoloaderException {@see Autoloader::parseAutoloaderFile()}
+	 * @return bool
+	 */
+	public static function classExists(IO\file $autoloaderFile, string $class): bool {
+		$autoloader = self::parseAutoloaderFile($autoloaderFile);
+		foreach($autoloader['files'] as $item) {
+			if (in_array($class, $item['classes'])) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Check name of class based on grammer.
+	 * 
+	 * @param string $name
+	 * @param bool $withNamespace which namespace in class is allowed or not.
+	 * @return bool
+	 */
+	public static function isValidClassName(string $class, bool $withNamespace = true) {
+		if ($withNamespace) {
+			$parts = explode("\\", $class);
+			foreach ($parts as $part) {
+				if (!preg_match("/^[a-z_][a-z0-9_]*$/i", $part)){
+					return false;
+				}
+			}
+			return true;
+		}
+		return preg_match("/^[a-z_][a-z0-9_]*$/i", $class);
 	}
 
 	/**
