@@ -1,7 +1,7 @@
 <?php
 namespace packages\assistant;
 use packages\base\{IO, packages as BasePackages, json};
-use packages\PhpParser\{ParserFactory, NodeTraverser};
+use packages\PhpParser\{ParserFactory, NodeTraverser, Node, NodeVisitorAbstract};
 use packages\assistant\PhpParser\AutoloadItemFinder;
 
 class Autoloader extends Process {
@@ -74,7 +74,7 @@ class Autoloader extends Process {
 	}
 	
 	/**
-	 * find and parse autoloader the package and looking for the class.
+	 * check autoloader file of the package for existace of the class.
 	 * 
 	 * @param string $package
 	 * @param string $class summerized name of class
@@ -82,9 +82,9 @@ class Autoloader extends Process {
 	 * @throws packages\assistant\AutoloaderException if the package does not have an autoloader.
 	 * @throws packages\base\IO\NotFoundException {@see Autoloader::parseAutoloaderFile()}
 	 * @throws packages\assistant\AutoloaderException {@see Autoloader::parseAutoloaderFile()}
-	 * 
+	 * @return bool
 	 */
-	public static function classExistsInPackage(string $package, string $class) {
+	public static function classExistsInPackage(string $package, string $class): bool {
 		$autoloaderFile = self::getAutoloaderFileOfPackage($package);
 		if (!$autoloaderFile) {
 			throw new AutoloaderException("this package does not have an autoloader");
@@ -93,20 +93,51 @@ class Autoloader extends Process {
 	}
 
 	/**
-	 * parse autoloader the package and looking for the class.
+	 * check autoloader file for existace of the class.
 	 * 
 	 * @throws packages\base\IO\NotFoundException {@see Autoloader::parseAutoloaderFile()}
 	 * @throws packages\assistant\AutoloaderException {@see Autoloader::parseAutoloaderFile()}
 	 * @return bool
 	 */
 	public static function classExists(IO\file $autoloaderFile, string $class): bool {
+		return self::getClassFile($autoloaderFile, $class) !== null;
+	}
+
+	/**
+	 * find and parse autoloader the package and looking for the class.
+	 * 
+	 * @param string $package
+	 * @param string $class summerized name of class
+	 * @throws packages\assistant\PackageConfigException {@see Packages::getPackageConfig()}
+	 * @throws packages\assistant\AutoloaderException if the package does not have an autoloader.
+	 * @throws packages\base\IO\NotFoundException {@see Autoloader::parseAutoloaderFile()}
+	 * @throws packages\assistant\AutoloaderException {@see Autoloader::parseAutoloaderFile()}
+	 * @return packages\base\IO\file|null
+	 */
+	public static function getClassFileInPackage(string $package, string $class) {
+		$autoloaderFile = self::getAutoloaderFileOfPackage($package);
+		if (!$autoloaderFile) {
+			throw new AutoloaderException("this package does not have an autoloader");
+		}
+		$result = self::getClassFile($autoloaderFile, $class);
+		return $result !== null ? Packages::getPackageDirectory($package)->file($result) : null;
+	}
+
+	/**
+	 * parse autoloader the package and looking for the class.
+	 * 
+	 * @throws packages\base\IO\NotFoundException {@see Autoloader::parseAutoloaderFile()}
+	 * @throws packages\assistant\AutoloaderException {@see Autoloader::parseAutoloaderFile()}
+	 * @return string|null path to the file
+	 */
+	public static function getClassFile(IO\file $autoloaderFile, string $class) {
 		$autoloader = self::parseAutoloaderFile($autoloaderFile);
 		foreach($autoloader['files'] as $item) {
 			if (in_array($class, $item['classes'])) {
-				return true;
+				return $item['file'];
 			}
 		}
-		return false;
+		return null;
 	}
 
 	/**
@@ -127,6 +158,56 @@ class Autoloader extends Process {
 			return true;
 		}
 		return preg_match("/^[a-z_][a-z0-9_]*$/i", $class);
+	}
+	/**
+	 * @param string $className
+	 * @return packages\PhpParser\NodeVisitorAbstract
+	 */
+	public static function getPhpParserClassFinder(string $className) {
+		return new class($className) extends NodeVisitorAbstract {
+			/**
+			 * @var packages\PhpParser\Node\Stmt\Class_
+			 */
+			public $class;
+
+			/**
+			 * @var string
+			 */
+			private $className;
+
+			public function __construct(string $className) {
+				$this->className = $className;
+			}
+
+			/**
+			 * @param packages\PhpParser\Node $node
+			 */
+			public function enterNode(Node $node) {
+				if ($node instanceof Node\Stmt\Class_) {
+					if (!$this->class and $node->name == $this->className) {
+						$this->class = $node;
+					}
+					return NodeTraverser::DONT_TRAVERSE_CHILDREN;
+				}
+			}
+		};
+	}
+
+	/**
+	 * @param packages\base\IO\file $file should be exists.
+	 * @param string $className
+	 * @throws packages\PhpParser\Error if there is error in parsing process.
+	 * @return packages\PhpParser\Node\Stmt\Class_
+	 */
+	public static function getClassFromFile(IO\file $file, string $className) {
+		$visitor = self::getPhpParserClassFinder($className);
+		$traverser = new NodeTraverser;
+		$traverser->addVisitor($visitor);
+
+		$parser = (new ParserFactory)->create(ParserFactory::PREFER_PHP7);
+		$stmts = $parser->parse($file->read());
+		$traverser->traverse($stmts);
+		return $visitor->class;
 	}
 
 	/**

@@ -1,7 +1,7 @@
 <?php
 namespace packages\assistant;
 use packages\base\{IO\directory, IO\file, log};
-use packages\PhpParser\{ParserFactory, NodeTraverser, NodeVisitorAbstract, Node};
+use packages\PhpParser\Node;
 
 class Controllers extends Process {
 	/**
@@ -15,6 +15,54 @@ class Controllers extends Process {
 	}
 
 	/**
+	 * Check controller class in autoloader of the package and method name in the founded class.
+	 * 
+	 * @param string $package must be valid and exist.
+	 * @param string $controller format must be: {summerized class name}@{method name}
+	 * @throws packages\assistant\PackageConfigException {@see Packages::getPackageConfig()}
+	 * @throws packages\assistant\AutoloaderException if the package does not have an autoloader.
+	 * @throws packages\base\IO\NotFoundException {@see Autoloader::parseAutoloaderFile()}
+	 * @throws packages\assistant\AutoloaderException {@see Autoloader::parseAutoloaderFile()}
+	 * @throws packages\base\IO\NotFoundException if class file does not exists.
+	 * @throws packages\PhpParser\Error {@see Autoloader::getClassFromFile()}
+	 * @throws packages\assistant\ClassNotExistException if cannot find the class in autoloader provided file.
+	 * @return bool
+	 */
+	public static function exists(string $package, string $controller) {
+		list($className, $method) = explode("@", $controller);
+		$file = Autoloader::getClassFileInPackage($package, $className);
+		if ($file === null) {
+			return false;
+		}
+		if (!$file->exists()) {
+			throw new NotFoundException($file);
+		}
+		$baseClassName = $className;
+		if (($pos = strrpos($baseClassName, "\\")) !== null) {
+			$baseClassName = substr($baseClassName, $pos + 1);
+		}
+		$class = Autoloader::getClassFromFile($file, $baseClassName);
+		if (!$class) {
+			throw new ClassNotExistException($className);
+		}
+		return self::methodExists($class, $method);
+	}
+
+	/**
+	 * @param packages\PhpParser\Node\Stmt\Class_ $class
+	 * @param string $method
+	 * @return bool
+	 */
+	public static function methodExists(Node\Stmt\Class_ $class, string $method) {
+		foreach($class->stmts as $stmt) {
+			if ($stmt instanceof Node\Stmt\ClassMethod and $stmt->name == $method) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * @param array $data should be contain:
 	 * 						"package"(string)
 	 * 						"name"(string)
@@ -23,6 +71,9 @@ class Controllers extends Process {
 	 * 						"namespace" (string) default: controllers
 	 * 						"directory" (string)
 	 * 						"no-autoload"(bool)
+	 * 						"address"(string)
+	 * 						"method"(string|string[])
+	 * 						"absolute"(bool)
 	 * 						"userpanel"(bool)
 	 * 
 	 * @throws Exception if there is no package index in parameters
@@ -141,49 +192,15 @@ class Controllers extends Process {
 				));
 			}
 		} else {
-			$parser = (new ParserFactory)->create(ParserFactory::PREFER_PHP7);
-			$visitor = new class($className) extends NodeVisitorAbstract {
-				/**
-				 * @var packages\PhpParser\Node\Stmt\Class_
-				 */
-				public $class;
-
-				/**
-				 * @var string
-				 */
-				private $className;
-
-				public function __construct(string $className) {
-					$this->className = $className;
-				}
-
-				/**
-				 * @param packages\PhpParser\Node $node
-				 */
-				public function enterNode(Node $node) {
-					if ($node instanceof Node\Stmt\Class_) {
-						if (!$this->class and $node->name == $this->className) {
-							$this->class = $node;
-						}
-						return NodeTraverser::DONT_TRAVERSE_CHILDREN;
-					}
-				}
-			};
-			$fileContent = $file->read();
-			$fileLines = explode("\n", $fileContent);
-			$traverser = new NodeTraverser;
-			$traverser->addVisitor($visitor);
-			$stmts = $parser->parse($fileContent);
-			$traverser->traverse($stmts);
-			if (!$visitor->class) {
-				throw new ClassNotExistException($this->className);
+			$fileLines = explode("\n", $file->read());
+			$class = Autoloader::getClassFromFile($file, $className);
+			if (!$class) {
+				throw new ClassNotExistException($className);
 			}
-			foreach($visitor->class->stmts as $stmt) {
-				if ($stmt instanceof Node\Stmt\ClassMethod and $stmt->name == $method) {
-					throw new AlreadyMethodExistException($method);
-				}
+			if (self::methodExists($class, $method)) {
+				throw new AlreadyMethodExistException($method);
 			}
-			array_splice($fileLines, $visitor->class->getAttribute("endLine") - 1, 0, $methodBody);
+			array_splice($fileLines, $class->getAttribute("endLine") - 1, 0, $methodBody);
 			$fileContent = implode("\n", $fileLines);
 			$file->write($fileContent);
 		}
