@@ -137,6 +137,12 @@
                 "Router"
             ],
             "file": "processes/Router.php"
+        },
+        {
+            "classes": [
+                "Views"
+            ],
+            "file": "processes/Views.php"
         }
     ]
 }

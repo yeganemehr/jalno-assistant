@@ -123,7 +123,7 @@ class Controllers extends Process {
 				throw new BadClassNameException($data['namespace']);
 			}
 		} else {
-			$data['namespace'] = "Controllers";
+			$data['namespace'] = "controllers";
 		}
 		if ($data['namespace']) {
 			$controllerName = $data['namespace'] . "\\" . $controllerName;
