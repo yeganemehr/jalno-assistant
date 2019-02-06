@@ -6,7 +6,7 @@ class Views extends Process {
 	 * @param array $data should be contain:
 	 * 						"package"(string)
 	 * 						"name"(string)
-	 * 					  other optional indexes: 
+	 * 					  other optional indexes:
 	 * 						"file" (string)
 	 * 						"directory" (string)
 	 * 						"namespace" (string) default: views

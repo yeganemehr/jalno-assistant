@@ -50,6 +50,12 @@
         },
         {
             "classes": [
+                "BadFrontendNameException"
+            ],
+            "file": "exceptions/BadFrontendNameException.php"
+        },
+        {
+            "classes": [
                 "GitExecutableException"
             ],
             "file": "exceptions/GitExecutableException.php"
@@ -77,6 +83,12 @@
                 "AlreadyMethodExistException"
             ],
             "file": "exceptions/AlreadyMethodExistException.php"
+        },
+        {
+            "classes": [
+                "AlreadyFrontendExistException"
+            ],
+            "file": "exceptions/AlreadyFrontendExistException.php"
         },
         {
             "classes": [
@@ -143,6 +155,12 @@
                 "Views"
             ],
             "file": "processes/Views.php"
+        },
+        {
+            "classes": [
+                "Frontends"
+            ],
+            "file": "processes/Frontends.php"
         }
     ]
 }

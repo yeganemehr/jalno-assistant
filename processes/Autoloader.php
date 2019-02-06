@@ -211,6 +211,18 @@ class Autoloader extends Process {
 	}
 
 	/**
+	 * Init an empty autoloader file.
+	 * 
+	 * @param packages\base\IO\file
+	 * @return void
+	 */
+	public static function initFile(IO\file $file) {
+		$file->write(json\encode(array(
+			'files' => []
+		), json\PRETTY));
+	}
+
+	/**
 	 * @param array $data should be contain:
 	 * 						"package"(string)
 	 * 						"file"(string)

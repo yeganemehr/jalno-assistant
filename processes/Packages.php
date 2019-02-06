@@ -34,7 +34,7 @@ class Packages extends Process {
 	/**
 	 * Load package.json of given package and return its content.
 	 * 
-	 * @param strin $name
+	 * @param string $name
 	 * @throws packages\assistant\PackageConfigException if package.json can't be found or can't be decod.
 	 * @return array
 	 */
@@ -48,6 +48,19 @@ class Packages extends Process {
 			throw new PackageConfigException($name, $file->getPath(). " json decode error: " . json_last_error_msg() . "(" . json_last_error() . ")");
 		}
 		return $json;
+	}
+
+	/**
+	 * Save given config into the package.json
+	 * 
+	 * @param string $name must be valid exist.
+	 * @param array $config must be valid.
+	 * @throws packages\assistant\PackageConfigException if package.json can't be found or can't be decod.
+	 * @return void
+	 */
+	public static function savePackageConfig(string $name, array $config) {
+		$file = new File("packages/{$name}/package.json");
+		$file->write(json\encode($config, json\PRETTY |  JSON_UNESCAPED_SLASHES));
 	}
 
 	/**
@@ -121,26 +134,17 @@ class Packages extends Process {
 			}
 		}
 		$packageDir->make();
-		$packageDir->file("package.json")->write(json\encode($package, json\PRETTY |  JSON_UNESCAPED_SLASHES));
+		self::savePackageConfig($data['name'], $package);
+		
 		if (isset($package['routing'])) {
 			$packageDir->file($package['routing'])->write("[]");
 		}
 		if (isset($package['autoload'])) {
-			$packageDir->file($package['autoload'])->write(json\encode(array(
-				'files' => []
-			), json\PRETTY));
+			Autoloader::initFile($packageDir->file($package['autoload']));
 		}
 		if (isset($package['languages'])) {
 			foreach($package['languages'] as $code => $langFile) {
-				$file = $packageDir->file($langFile);
-				$dir = $file->getDirectory();
-				if (!$dir->exists()) {
-					$dir->make();
-				}
-				$file->write(json\encode(array(
-					'rtl' => AssistantTranslator::isRTL($code),
-					'phrases' => []
-				), json\PRETTY));
+				AssistantTranslator::initFile($packageDir->file($langFile), $code);
 			}
 		}
 		if (isset($data['git'])) {
