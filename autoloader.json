@@ -44,6 +44,12 @@
         },
         {
             "classes": [
+                "BadMethodNameException"
+            ],
+            "file": "exceptions/BadMethodNameException.php"
+        },
+        {
+            "classes": [
                 "GitExecutableException"
             ],
             "file": "exceptions/GitExecutableException.php"
@@ -65,6 +71,18 @@
                 "AlreadyClassExistException"
             ],
             "file": "exceptions/AlreadyClassExistException.php"
+        },
+        {
+            "classes": [
+                "AlreadyMethodExistException"
+            ],
+            "file": "exceptions/AlreadyMethodExistException.php"
+        },
+        {
+            "classes": [
+                "ClassNotExistException"
+            ],
+            "file": "exceptions/ClassNotExistException.php"
         },
         {
             "classes": [
@@ -95,6 +113,12 @@
                 "Models"
             ],
             "file": "processes/Models.php"
+        },
+        {
+            "classes": [
+                "Controllers"
+            ],
+            "file": "processes/Controllers.php"
         }
     ]
 }
