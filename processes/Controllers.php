@@ -73,7 +73,6 @@ class Controllers extends Process {
 	 * 						"no-autoload"(bool)
 	 * 						"address"(string)
 	 * 						"method"(string|string[])
-	 * 						"absolute"(bool)
 	 * 						"userpanel"(bool)
 	 * 
 	 * @throws Exception if there is no package index in parameters
@@ -124,7 +123,7 @@ class Controllers extends Process {
 				throw new BadClassNameException($data['namespace']);
 			}
 		} else {
-			$data['namespace'] = "controllers";
+			$data['namespace'] = "Controllers";
 		}
 		if ($data['namespace']) {
 			$controllerName = $data['namespace'] . "\\" . $controllerName;
@@ -203,6 +202,18 @@ class Controllers extends Process {
 			array_splice($fileLines, $class->getAttribute("endLine") - 1, 0, $methodBody);
 			$fileContent = implode("\n", $fileLines);
 			$file->write($fileContent);
+		}
+		if (isset($data['address'])) {
+			$newData = array(
+				'package' => $data['package'],
+				'address' => $data['address'],
+				'controller' => $controllerName . '@' . $method,
+			);
+			if (isset($data['method'])) {
+				$newData['method'] = $data['method'];
+			}
+			$router = new Router();
+			$router->add($newData);
 		}
 	}
 }
